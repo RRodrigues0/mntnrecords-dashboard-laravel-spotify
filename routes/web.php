@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\Releases;
+use App\Http\Controllers\ReleasesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,4 +15,4 @@ use App\Http\Controllers\Releases;
 |
 */
 
-Route::get('/api/releases', [Releases::class, 'view']);
+Route::get('/api/releases', [ReleasesController::class, 'view']);
