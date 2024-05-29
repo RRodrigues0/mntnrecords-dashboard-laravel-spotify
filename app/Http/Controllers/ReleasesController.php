@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Releases;
+use App\Http\Controllers\ArtistsController;
 use Spotify;
 
 class ReleasesController
