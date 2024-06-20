@@ -4,14 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Release extends Model
+class Split extends Model
 {
     protected $fillable = [
-        'isrc',
-        'barcode',
-        'title',
+        'release_id',
+        'artist_id',
         'percentage',
-        'income',
-        'reserved'
+        'income'
     ];
 }

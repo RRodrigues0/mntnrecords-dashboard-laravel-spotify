@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use App\Models\Release;
 use App\Models\Artist;
 use App\Models\User;
+use App\Models\Split;
 use Spotify;
 
 
@@ -90,12 +91,19 @@ class ReleasesController extends Controller
         return false;
     }
 
-    private function saveReleasesAsJsonInDatabase($data)
+    private function saveReleasesInDatabase($data)
     {
-        $json = json_encode($data);
-        $releases = new Release();
-        $releases->json = $json;
-        $releases->save();
+        foreach ($data as $release) {
+            $query = Release::where('isrc', $release[0]['isrc'])->first();
+
+            if (!$query) {
+                $newRelease = new Release();
+                $newRelease->isrc = $release[0]['isrc'];
+                $newRelease->title = $release[0]['name'];
+                $newRelease->save();
+            }
+        }
+
         $this->saveArtists($data);
     }
 
@@ -118,28 +126,44 @@ class ReleasesController extends Controller
         $password = $this->createPassword();
 
         $newUser = new User();
-        $newUser->username = $data['name'];
+        $newUser->name = $data['name'];
         $newUser->password = Hash::make($password);
         $newUser->save();
     }
+
+    private function createSplit($length, $isrc, $artist_id)
+    {
+        $artist = Artist::where('spotify_id', $artist_id)->first();
+        $release = Release::where('isrc', $isrc)->first();
+
+        $newSplit = new Split();
+        $newSplit->release_id = $release['id'];
+        $newSplit->artist_id = $artist['id'];
+        $newSplit->percentage = floor(50 / $length);
+        $newSplit->save();
+    }
+
 
     private function saveArtists($data)
     {
         foreach ($data as $release) {
             $artists = $release[0]['artists'];
+            $length = count($artists);
 
             foreach ($artists as $artist) {
-                $query = Artist::where('id', $artist['id'])->first();
+                $query = Artist::where('spotify_id', $artist['id'])->first();
 
                 if (!$query) {
                     $this->createUser($artist);
-                    $user = User::where('username', $artist['name'])->first();
+                    $user = User::where('name', $artist['name'])->first();
 
                     $newArtist = new Artist();
-                    $newArtist->id = $artist['id'];
+                    $newArtist->spotify_id = $artist['id'];
                     $newArtist->user_id = $user['id'];
                     $newArtist->save();
                 }
+
+                $this->createSplit($length, $release[0]['isrc'], $artist['id']);
             }
         }
     }
@@ -163,7 +187,7 @@ class ReleasesController extends Controller
         //     return response()->json('Releases already saved in Database!');
         // }
         $data = $this->getAllReleases();
-        $this->saveReleasesAsJsonInDatabase($data);
+        $this->saveReleasesInDatabase($data);
 
         // $releases = Releases::first();
         // $data = json_decode($releases->json);
