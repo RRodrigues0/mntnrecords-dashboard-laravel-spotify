@@ -15,4 +15,4 @@ use App\Http\Controllers\ReleasesController;
 |
 */
 
-Route::get('/api/releases', [ReleasesController::class, 'view'])->middleware(['ReleasesMiddleware']);
+Route::get('/api/releases', [ReleasesController::class, 'view']);

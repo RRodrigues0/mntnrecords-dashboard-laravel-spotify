@@ -12,13 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('releases', function (Blueprint $table) {
-            $table->string('id')->unique();
-            $table->string('isrc')->unique();
-            $table->string('title');
-            $table->date('release_date');
-            $table->string('url');
-            $table->json('artwork');
-            $table->string('duration');
+            $table->id();
+            $table->json('json');
             $table->timestamps();
         });
     }

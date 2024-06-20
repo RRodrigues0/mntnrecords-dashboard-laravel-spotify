@@ -12,17 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('artists', function (Blueprint $table) {
-            $table->string('id')->unique();
-            $table->string('username')->unique();
-            $table->string('first_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
+            $table->string('id')->primary();
+            $table->foreignId('user_id')->references('id')->on('users');
             $table->binary('avatar')->nullable();
-            $table->string('currency')->default('EUR');
-            $table->boolean('blocked')->default(0);
             $table->timestamps();
         });
     }
@@ -32,6 +24,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('artists', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
+        });
         Schema::dropIfExists('artists');
     }
 };
