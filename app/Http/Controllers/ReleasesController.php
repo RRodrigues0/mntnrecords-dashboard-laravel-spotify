@@ -96,7 +96,7 @@ class ReleasesController extends Controller
         foreach ($data as $release) {
             $query = Release::where('isrc', $release[0]['isrc'])->first();
 
-            if (!$query) {
+            if ($query === null || !$query->exists()) {
                 $newRelease = new Release();
                 $newRelease->isrc = $release[0]['isrc'];
                 $newRelease->title = $release[0]['name'];
@@ -136,11 +136,15 @@ class ReleasesController extends Controller
         $artist = Artist::where('spotify_id', $artist_id)->first();
         $release = Release::where('isrc', $isrc)->first();
 
-        $newSplit = new Split();
-        $newSplit->release_id = $release['id'];
-        $newSplit->artist_id = $artist['id'];
-        $newSplit->percentage = floor(50 / $length);
-        $newSplit->save();
+        $query = Split::where('release_id', $release['id'])->where('artist_id', $artist['id'])->first();
+
+        if ($query === null || !$query->exists()) {
+            $newSplit = new Split();
+            $newSplit->release_id = $release['id'];
+            $newSplit->artist_id = $artist['id'];
+            $newSplit->percentage = floor(50 / $length);
+            $newSplit->save();
+        }
     }
 
 
@@ -153,7 +157,7 @@ class ReleasesController extends Controller
             foreach ($artists as $artist) {
                 $query = Artist::where('spotify_id', $artist['id'])->first();
 
-                if (!$query) {
+                if ($query === null || !$query->exists()) {
                     $this->createUser($artist);
                     $user = User::where('name', $artist['name'])->first();
 
@@ -181,18 +185,11 @@ class ReleasesController extends Controller
     //     ]);
     // }
 
-    public function view()
+    public function get()
     {
-        // if ($this->checkIfReleaseExistThisMonth()) {
-        //     return response()->json('Releases already saved in Database!');
-        // }
         $data = $this->getAllReleases();
         $this->saveReleasesInDatabase($data);
 
-        // $releases = Releases::first();
-        // $data = json_decode($releases->json);
-        // $this->saveArtists($data);
-
-        return response()->json('Releases saved in Database!');
+        return response()->json('Releases updated!');
     }
 }

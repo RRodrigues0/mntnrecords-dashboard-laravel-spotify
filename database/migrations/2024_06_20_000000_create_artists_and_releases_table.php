@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('barcode')->unique()->nullable();
             $table->string('title');
             $table->integer('percentage')->default(50);
-            $table->integer('income')->default(0);
+            $table->decimal('income', 8, 2)->default(0);
             $table->boolean('reserved')->default(true);
             $table->timestamps();
         });
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->foreignId('release_id')->references('id')->on('releases');
             $table->foreignId('artist_id')->references('id')->on('artists');
             $table->integer('percentage')->default(50);
-            $table->integer('income')->default(0);
+            $table->decimal('income', 8, 2)->default(0);
             $table->timestamps();
         });
     }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="light-style" lang="en">
+<html lang="en">
 
 <head>
     @include('includes.head')
