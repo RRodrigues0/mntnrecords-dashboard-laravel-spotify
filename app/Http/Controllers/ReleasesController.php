@@ -158,12 +158,15 @@ class ReleasesController extends Controller
                 $query = Artist::where('spotify_id', $artist['id'])->first();
 
                 if ($query === null || !$query->exists()) {
-                    $this->createUser($artist);
-                    $user = User::where('name', $artist['name'])->first();
+                    $query = User::where('name', $artist['name'])->first();
+
+                    if ($query === null || !$query->exists()) {
+                        $this->createUser($artist);
+                    }
 
                     $newArtist = new Artist();
                     $newArtist->spotify_id = $artist['id'];
-                    $newArtist->user_id = $user['id'];
+                    $newArtist->user_id = $query['id'];
                     $newArtist->save();
                 }
 

@@ -38,6 +38,14 @@ return new class extends Migration
             $table->decimal('income', 8, 2)->default(0);
             $table->timestamps();
         });
+
+        Schema::create('incomes', function (Blueprint $table) {
+            $table->id();
+            $table->date('statement_date')->format('Y-m');
+            $table->decimal('income', 8, 2)->default(0);
+            $table->foreignId('split_id')->references('id')->on('splits');
+            $table->timestamps();
+        });
     }
 
     /**
@@ -45,8 +53,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('incomes');
+
         Schema::table('splits', function (Blueprint $table) {
-            $table->dropForeign(['release_id'], ['artist_id']);
+            $table->dropForeign(['release_id']);
+            $table->dropForeign(['artist_id']);
         });
         Schema::dropIfExists('splits');
 

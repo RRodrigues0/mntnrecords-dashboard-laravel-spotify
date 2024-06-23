@@ -2,59 +2,109 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+
+use GuzzleHttp\Client;
+use App\Models\Users;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
-    public function edit(Request $request): View
+    public function app(Request $request)
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
+        $user = $request->user;
+        $balance = $request->balance;
+
+        $value = 'profile';
+
+        return view('layout', [
+            'class' => $value,
+            'content' => view($value, [
+                'user' => $user,
+                'balance' => $balance
+            ])->render()
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function post(Request $request)
     {
-        $request->user()->fill($request->validated());
+        $form = $request->input('id');
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($form == "avatarForm") {
+            $user = Auth::user();
+
+            $validator = Validator::make($request->all(), [
+                'avatar' => 'required|image|mimes:jpg,jpeg|max:2048',
+            ]);
+            if ($validator->fails()) {
+                return back()
+                    ->withErrors(['avatarMessage' => 'Something went wrong. Please try a smaller or different image format.']);
+            }
+
+            $imageName = time() . '.' . $request->avatar->getClientOriginalExtension();
+            $request->avatar->move(public_path('storage/uploads'), $imageName);
+
+            $imageUrl = public_path('storage/uploads') . '/' . $imageName;
+            $client = new Client();
+
+            try {
+                $response = $client->post(env('STRAPI_URL') . '/api/upload/', [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . env('STRAPI_API_KEY'),
+                    ],
+                    'multipart' => [
+                        [
+                            'name' => 'files',
+                            'contents' => fopen($imageUrl, 'r'),
+                            'filename' => $imageName,
+                        ],
+                    ],
+                ]);
+
+                $image = json_decode($response->getBody(), true);
+
+                $response = $client->put(env('STRAPI_URL') . '/api/users/' . $user->id, [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . env('STRAPI_API_KEY'),
+                    ],
+                    'json' => [
+                        'avatar' => $image[0]['id'],
+                    ],
+                ]);
+
+                return redirect()->back()->with('avatarSuccess', 'Picture changed successfully.');
+            } catch (Exception $e) {
+                return back()
+                    ->withErrors(['avatarMessage' => 'Something went wrong. Please try a smaller or different image format.']);
+            }
         }
 
-        $request->user()->save();
+        if ($form == "passForm") {
+            $user = Auth::user();
+            $oldPassword = $request->input('oldPassword');
+            $newPassword = $request->input('newPassword');
+            $confirmPassword = $request->input('confirmPassword');
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
-    }
+            if (!password_verify($oldPassword, $user->password)) {
+                return back()
+                    ->withErrors(['passwordMessage' => 'The old password you entered is incorrect.']);
+            }
 
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
+            if ($newPassword !== $confirmPassword) {
+                return back()
+                    ->withErrors(['passwordMessage' => 'The confirmation password does not match.']);
+            }
 
-        $user = $request->user();
+            $query = Users::where('id', $user->id)->first();
+            $query->password = Hash::make($newPassword);
+            $query->save();
 
-        Auth::logout();
+            return redirect()->back()->with('passwordSuccess', 'Password changed successfully');
+        }
 
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        // return redirect('/profile');
     }
 }

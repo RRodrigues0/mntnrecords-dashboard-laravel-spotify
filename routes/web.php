@@ -1,5 +1,10 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReleasesController;
 use App\Http\Controllers\DashboardController;
@@ -8,9 +13,12 @@ use App\Http\Controllers\StatisticController;
 
 use App\Http\Middleware\UserDataMiddleware;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
+use App\Mail\SendForgotMail;
+
+
+use App\Models\User;
+
+
 
 // Route::get('/', function () {
 //     return view('welcome');

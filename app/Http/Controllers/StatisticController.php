@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Release;
 use App\Models\Split;
 use App\Models\History;
+use App\Models\Income;
 
 class StatisticController extends Controller
 {
@@ -64,9 +65,13 @@ class StatisticController extends Controller
             return;
         }
 
-        $query->update([
-            'barcode' => $barcode
-        ]);
+        try {
+            $query->update([
+                'barcode' => $barcode
+            ]);
+        } catch (\Exception $e) {
+            dump('Barcode not added to release: ' . $releaseTitle . ' - ' . $barcode);
+        }
     }
 
     private function addFileIntoDatabase()
@@ -94,9 +99,9 @@ class StatisticController extends Controller
                 $newUpload->release_downloads_revenue = $data['Release downloads revenue'];
                 $newUpload->total_revenue = $data['Total revenue'];
                 $newUpload->save();
-
-                $this->addBarcodeToRelease($data['Release title'], $data['Barcode']);
             }
+
+            $this->addBarcodeToRelease($data['Release title'], $data['Barcode']);
         }
     }
 
@@ -142,16 +147,28 @@ class StatisticController extends Controller
 
         $query->each(function ($artist) use ($history, $release, $remains) {
             $artist->percentage = $artist->percentage ?? 0;
-            $history->income = $history->income ?? 0;
+            $history->total_revenue = $history->total_revenue ?? 0;
+            $split = 0;
 
             if ((bool) $release->reserved === false) {
                 if ($remains > 0) {
-                    $artist->income += $remains * ($artist->percentage / 100);
+                    $split = $remains * ($artist->percentage / 100);
                 } else {
-                    $artist->income += ($history->total_revenue * ($artist->percentage / 100));
+                    $split = ($history->total_revenue * ($artist->percentage / 100));
                 }
             }
 
+            $query = Income::where('statement_date', date('Y-m-d', strtotime($history['statement_date'])))->where('split_id', $artist->id)->first();
+
+            if ($query === null || !$query->exists()) {
+                $newIncome = new Income();
+                $newIncome->statement_date = date('Y-m-d', strtotime($history['statement_date']));
+                $newIncome->income = $split;
+                $newIncome->split_id = $artist->id;
+                $newIncome->save();
+            }
+
+            $artist->income += $split;
             $artist->save();
         });
     }
