@@ -15,7 +15,7 @@ class StatisticController extends Controller
 
     public function post()
     {
-        // $this->backupDatabase();
+        $this->backupDatabase();
         $this->resetIncome();
         $this->addFileIntoDatabase();
         $this->calcIncome();
@@ -96,46 +96,16 @@ class StatisticController extends Controller
                 $newUpload->save();
 
                 $this->addBarcodeToRelease($data['Release title'], $data['Barcode']);
-            } else {
-                $query = History::where('statement_date', date('Y-m-d', strtotime($data['Statement date'])))
-                    ->where('release_title', $data['Release title'])
-                    ->where('barcode', $data['Barcode'])
-                    ->where('track_downloads', $data['Track downloads'])
-                    ->where('track_streams', $data['Track streams'])
-                    ->where('release_downloads', $data['Release downloads'])
-                    ->where('track_downloads_revenue', round($data['Track downloads'], 2))
-                    ->where('track_streams_revenue', round($data['Track streams revenue'], 2))
-                    ->where('release_downloads_revenue', round($data['Release downloads revenue'], 2))
-                    ->where('total_revenue', round($data['Total revenue'], 2))
-                    ->first();
-
-                if ($query === null || !$query->exists()) {
-                    $query = History::where('statement_date', date('Y-m-d', strtotime($data['Statement date'])))
-                        ->where('release_title', $data['Release title'])
-                        ->where('barcode', $data['Barcode'])->first();
-                    $query->update([
-                        'statement_date' => date('Y-m-d', strtotime($data['Statement date'])),
-                        'release_title' => $data['Release title'],
-                        'barcode' => $data['Barcode'],
-                        'track_downloads' => $data['Track downloads'],
-                        'track_streams' => $data['Track streams'],
-                        'release_downloads' => $data['Release downloads'],
-                        'track_downloads_revenue' => $data['Track downloads revenue'],
-                        'track_streams_revenue' => $data['Track streams revenue'],
-                        'release_downloads_revenue' => $data['Release downloads revenue'],
-                        'total_revenue' => $data['Total revenue']
-                    ]);
-                }
             }
         }
     }
 
     private function resetIncome()
     {
-        // Release::each(function ($release) {
-        //     $release->income = 0;
-        //     $release->save();
-        // });
+        Release::each(function ($release) {
+            $release->income = 0;
+            $release->save();
+        });
 
         Split::each(function ($split) {
             $split->income = 0;
@@ -143,16 +113,63 @@ class StatisticController extends Controller
         });
     }
 
+    private function saveLabelIncome($history, $label)
+    {
+        $label->percentage = $label->percentage ?? 0;
+        $history->total_revenue = $history->total_revenue ?? 0;
+        $remains = 0;
+
+        if ((bool) $label->reserved === true) {
+            if ($label->income + $history->total_revenue >= 50) {
+                $remains = abs(50 - ($label->income + $history->total_revenue));
+                $label->reserved = false;
+                $label->income = 50 + ($remains * ($label->percentage / 100));
+            } else {
+                $label->income += $history->total_revenue;
+            }
+        } else {
+            $label->income += ($history->total_revenue * ($label->percentage / 100));
+        }
+
+        $label->save();
+
+        return $remains;
+    }
+
+    private function saveArtistsIncome($history, $remains, $release)
+    {
+        $query = Split::where('release_id', $release->id)->get();
+
+        $query->each(function ($artist) use ($history, $release, $remains) {
+            $artist->percentage = $artist->percentage ?? 0;
+            $history->income = $history->income ?? 0;
+
+            if ((bool) $release->reserved === false) {
+                if ($remains > 0) {
+                    $artist->income += $remains * ($artist->percentage / 100);
+                } else {
+                    $artist->income += ($history->total_revenue * ($artist->percentage / 100));
+                }
+            }
+
+            $artist->save();
+        });
+    }
+
     private function calcIncome()
     {
-        $releases = Release::all();
         $histories = History::all();
 
-        // foreach ($histories as $history) {
-        //     $remains = $this->saveLabelIncome($releases, $history);
-        // }
+        foreach ($histories as $history) {
+            $query = Release::where('barcode', $history->barcode)->first();
 
+            if ($query === null || !$query->exists()) {
+                dump('Release not found: ' . $history->release_title . ' - ' . $history->barcode);
+                continue;
+            }
 
-        // $this->saveArtistsIncome($release, $history, $remains);
+            $remains = $this->saveLabelIncome($history, $query);
+            $this->saveArtistsIncome($history, $remains, $query);
+        }
     }
 }
