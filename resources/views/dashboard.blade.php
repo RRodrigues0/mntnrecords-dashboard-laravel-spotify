@@ -54,7 +54,7 @@
                         <div class="grid">
                             <div class="card">
                                 <button class="wallet">
-                                    <div class="tilt"><img src="/images/paypal.svg">
+                                    <div class="tilt"><img src="{{ mix('/resources/images/paypal.svg') }}">
                                         <div class="flex">
                                             <div class="left">
                                                 <p class="small uppercase">Balance</p>
@@ -62,7 +62,7 @@
                                             </div>
                                             <div class="right">
                                                 <p class="small uppercase">Holder</p>
-                                                <span>{!! $user['firstName'] !!}</span>
+                                                <span>{!! $user['first_name'] ?? $user['name'] !!}</span>
                                             </div>
                                         </div>
                                     </div>
