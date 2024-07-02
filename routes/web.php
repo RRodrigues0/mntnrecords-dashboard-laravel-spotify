@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReleasesController;
+use App\Http\Controllers\ReleasesListController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\StatisticController;
@@ -102,7 +103,7 @@ Route::post('/forgot', function (Request $request) {
 
 Route::middleware(['auth', 'verified', UserDataMiddleware::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'app'])->name('dashboard');
-    Route::get('/releases', [ReleasesController::class, 'app'])->name('releases');
+    Route::get('/releases', [ReleasesListController::class, 'app'])->name('releases');
     Route::get('/profile', [ProfileController::class, 'app'])->name('profile');
     Route::post('/profile', [ProfileController::class, 'post']);
     Route::get('/payout', [PayoutController::class, 'app'])->name('payout');

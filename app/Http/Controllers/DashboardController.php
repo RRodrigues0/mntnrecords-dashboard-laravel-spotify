@@ -113,6 +113,7 @@ class DashboardController extends Controller
     public function app(Request $request)
     {
         $user = $request->user;
+        $avatar = $request->avatar;
         $balance = $request->balance;
         $lastMonth = $request->lastMonth;
         $releases = $request->releases;
@@ -129,6 +130,7 @@ class DashboardController extends Controller
             'lastMonth' => $lastMonth,
             'content' => view($value, [
                 'user' => $user,
+                'avatar' => $avatar,
                 'balance' => $balance,
                 'earnings' => $earnings ?? implode(";", array_fill(0, 7, 0)),
                 'lastReachesStreams' => $lastReachesStreams ?? implode(";", array_fill(0, 7, 0)),

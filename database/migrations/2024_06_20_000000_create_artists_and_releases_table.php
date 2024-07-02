@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('spotify_id')->unique();
             $table->foreignId('user_id')->references('id')->on('users');
             $table->binary('avatar')->nullable();
+            $table->decimal('payed', 8, 2)->default(0);
             $table->timestamps();
         });
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use finfo;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -46,22 +47,25 @@ class UserDataMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $payed = 0;
-
-        // foreach ($query->data as $payouts) {
-        //     $payout = $payouts->attributes;
-
-        //     if ($payout->artist->data->id === $id) {
-        //         $payed += $payout->amount;
-        //     }
-        // }
-
         $releases = [];
         $histories = [];
 
-        $artist_id = Artist::where('user_id', Auth::user()->id)->first()->id;
+        $artist = Artist::where('user_id', Auth::user()->id)->first();
+        $avatar = $artist->avatar;
+        $artist_id = $artist->id;
         $splits = Split::where('artist_id', $artist_id)->get();
 
+        $payed = $artist->payed;
+
+        if ($avatar) {
+            $blob = $avatar;
+            $base64 = base64_encode($blob);
+
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($blob);
+
+            $avatar = 'data:' . $mimeType . ';base64,' . $base64;
+        }
 
         foreach ($splits as $split) {
             $query = Release::where('id', $split->release_id)->whereNotNull('barcode')->first();
@@ -86,6 +90,7 @@ class UserDataMiddleware
 
         $request->merge([
             'user' => Auth::user(),
+            'avatar' => $avatar,
             'balance' => $balance,
             'histories' => $histories,
             'splits' => $splits->toArray(),

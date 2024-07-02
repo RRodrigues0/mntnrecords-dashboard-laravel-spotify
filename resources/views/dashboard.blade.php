@@ -2,8 +2,8 @@
     <div class="col-12">
         <div class="page">
             <aside class="left">
-                <div class="user"><a href="/profile"><img src="{!! $user['avatar'] !!}"></a>
-                    <p class="h3 headline">{!! $user['artistName'] !!} <span class="small">Artist</span></p>
+                <div class="user"><a href="/profile"><img src="{!! $avatar ?? mix('/resources/images/user.jpg') !!}"></a>
+                    <p class="h3 headline">{!! $user['name'] !!} <span class="small">Artist</span></p>
                 </div>
 
                 <div class="navigation">
