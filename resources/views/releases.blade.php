@@ -47,27 +47,13 @@
                                                     {!! $release['title'] !!}
                                                 </td>
                                                 <td class="streams">
-                                                    <div class="flex">
-                                                        -
-                                                        <div class="lines">
-                                                            <span class="line"></span><span
-                                                                class="line"></span><span class="line"></span><span
-                                                                class="line"></span><span class="line"></span>
-                                                        </div>
-                                                    </div>
+                                                    {{ $release['streams'] }} <small>Streams</small>
                                                 </td>
                                                 <td class="downloads">
-                                                    <div class="flex">
-                                                        -
-                                                        <div class="lines">
-                                                            <span class="line"></span><span
-                                                                class="line"></span><span class="line"></span><span
-                                                                class="line"></span><span class="line"></span>
-                                                        </div>
-                                                    </div>
+                                                    {{ $release['downloads'] }} <small>Downloads</small>
                                                 </td>
                                                 <td class="earnings">
-                                                    {{ $release['income'] }} €
+                                                    {{ $release['income'] }} <small>€</small>
                                                 </td>
                                             </tr>
                                         @endforeach

@@ -79,18 +79,6 @@ class ReleasesController extends Controller
         return $data;
     }
 
-    private function checkIfReleaseExistThisMonth()
-    {
-        $releases = Release::first();
-        $date = date('Y-m');
-        $date = $date . '-01 00:00:00';
-
-        if ($releases && $releases->created_at >= $date) {
-            return true;
-        }
-        return false;
-    }
-
     private function saveReleasesInDatabase($data)
     {
         foreach ($data as $release) {
@@ -174,19 +162,6 @@ class ReleasesController extends Controller
             }
         }
     }
-
-    // public function getReleases()
-    // {
-    //     $releases = Releases::first();
-
-    //     return response()->json([
-    //         'id' => $releases->id,
-    //         'length' => count(json_decode($releases->json)),
-    //         'created_at' => $releases->created_at,
-    //         'updated_at' => $releases->updated_at,
-    //         'items' => json_decode($releases->json)
-    //     ]);
-    // }
 
     public function get()
     {

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Spotify;
 use App\Models\Split;
 use App\Models\Income;
+use App\Models\History;
 
 class ReleasesListController extends Controller
 {
@@ -54,6 +55,34 @@ class ReleasesListController extends Controller
         return $income;
     }
 
+    private function getAllDownloadsForRelease($release)
+    {
+        $downloads = 0;
+        $barcode = $release['barcode'];
+
+        $query = History::where("barcode", $barcode)->orderBy("statement_date", 'DESC')->get();
+
+        foreach ($query as $item) {
+            $downloads += floatval($item->track_downloads);
+        }
+
+        return $downloads;
+    }
+
+    private function getAllStreamsForRelease($release)
+    {
+        $streams = 0;
+        $barcode = $release['barcode'];
+
+        $query = History::where("barcode", $barcode)->orderBy("statement_date", 'DESC')->take(2)->get();
+
+        foreach ($query as $item) {
+            $streams += floatval($item->track_streams);
+        }
+
+        return $streams;
+    }
+
     public function app(Request $request)
     {
         $user = $request->user;
@@ -70,10 +99,14 @@ class ReleasesListController extends Controller
 
             $data = $this->getTrackDataFromSpotify($release['isrc']);
             $income = $this->getAllIncomesForRelease($release);
+            $downloads = $this->getAllDownloadsForRelease($release);
+            $streams = $this->getAllStreamsForRelease($release);
 
             $releases[$key]['image'] = $data['items'][0]['album']['images'][2]['url'] ?? '';
             $releases[$key]['date'] = $data['items'][0]['album']['release_date'] ?? '';
             $releases[$key]['income'] = $income;
+            $releases[$key]['downloads'] = $downloads;
+            $releases[$key]['streams'] = $streams;
         }
 
         $value = 'releases';

@@ -13,27 +13,9 @@ use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\StatisticController;
 
 use App\Http\Middleware\UserDataMiddleware;
-
+use App\Http\Middleware\CheckUserEmailMiddleware;
 use App\Mail\SendForgotMail;
-
-
 use App\Models\User;
-
-
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
-// Route::get('/dashboard', function () {
-//     return view('dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
-
-// Route::middleware('auth')->group(function () {
-//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-//     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-// });
 
 Route::get('/login', function () {
     return view('layout', [
@@ -42,9 +24,11 @@ Route::get('/login', function () {
     ]);
 })->name('login');
 
-Route::get('/admin/releases/update', [ReleasesController::class, 'get']);
-Route::get('/admin/statistic/upload', [StatisticController::class, 'get']);
-Route::post('/admin/statistic/upload', [StatisticController::class, 'post']);
+Route::middleware(['auth', 'verified', CheckUserEmailMiddleware::class])->group(function () {
+    Route::get('/admin/releases/update', [ReleasesController::class, 'get']);
+    Route::get('/admin/statistic/upload', [StatisticController::class, 'get']);
+    Route::post('/admin/statistic/upload', [StatisticController::class, 'post']);
+});
 
 Route::get('/login', function () {
     return view('layout', [

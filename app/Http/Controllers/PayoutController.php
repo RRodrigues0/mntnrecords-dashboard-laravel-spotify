@@ -17,6 +17,7 @@ class PayoutController extends Controller
     public function app(Request $request)
     {
         $user = $request->user;
+        $avatar = $request->avatar;
         $balance = $request->balance;
 
         $value = 'payout';
@@ -25,6 +26,7 @@ class PayoutController extends Controller
             'class' => $value,
             'content' => view($value, [
                 'user' => $user,
+                'avatar' => $avatar,
                 'balance' => $balance
             ])->render()
         ]);
@@ -58,7 +60,7 @@ class PayoutController extends Controller
             $query->save();
 
             $subject = '🚨 New payout request';
-            $informations = 'Artist: ' . $user->name . '<br> Amount: ' . $money . '€';
+            $informations = 'Artist: ' . $user->name . '<br> Amount: ' . $money . '€' . '<br> PayPal: ' . $email;
             Mail::to(env('MAIL_DEBUG'))->send(new SendStatisticMail($subject, $informations));
 
             return redirect()->back()->with('payoutSuccess', 'Your payout has been successfully requested.');
